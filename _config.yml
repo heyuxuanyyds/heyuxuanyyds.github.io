@@ -1,0 +1,10 @@
+title: My Argon Blog
+description: A free blog powered by GitHub Pages
+url: ""
+baseurl: ""
+markdown: kramdown
+permalink: /:categories/:year/:month/:day/:title/
+plugins: []
+exclude:
+  - README.md
+  - LICENSE
