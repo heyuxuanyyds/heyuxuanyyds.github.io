@@ -1,10 +1,11 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{% if page.title %}{{ page.title }} · {% endif %}{{ site.title }}</title>
-  <link rel="stylesheet" href="{{ '/assets/css/argon.css' | relative_url }}">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% if page.title %}{{ page.title }} · {% endif %}{{ site.title }}</title>
+<meta name="description" content="{{ page.excerpt | default: site.description | strip_html | escape }}">
+<meta name="robots" content="index,follow">
+<link rel="stylesheet" href="{{ '/assets/css/argon.css' | relative_url }}">
 </head>
 <body>
 <header class="topbar"><a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a><nav><a href="{{ '/' | relative_url }}">首页</a><a href="{{ '/admin/' | relative_url }}">写文章</a></nav></header>
