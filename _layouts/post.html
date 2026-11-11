@@ -1,5 +1,18 @@
 <article class="article">
-  <div class="meta">{{ page.date | date: "%Y-%m-%d" }} · {{ page.categories | join: " / " }}</div>
+  <div class="meta">{{ page.date | date: "%Y-%m-%d %H:%M" }} · {{ page.categories | join: " / " }}</div>
   <h1>{{ page.title }}</h1>
+  {% if page.image %}<img class="cover" src="{{ page.image | relative_url }}" alt="{{ page.title }}">{% endif %}
   <div class="content">{{ content }}</div>
+  {% if page.tags.size > 0 %}<div class="tag-list">{% for tag in page.tags %}<span class="tag">{{ tag }}</span>{% endfor %}</div>{% endif %}
+  {% assign gc = site.data.site-settings.giscus %}
+  {% if gc.repo != nil and gc.repo != "" and gc.repo_id != nil and gc.repo_id != "" and gc.category != nil and gc.category != "" and gc.category_id != nil and gc.category_id != "" %}
+  <script src="https://giscus.app/client.js"
+    data-repo="{{ gc.repo | escape }}"
+    data-repo-id="{{ gc.repo_id | escape }}"
+    data-category="{{ gc.category | escape }}"
+    data-category-id="{{ gc.category_id | escape }}"
+    data-mapping="pathname" data-strict="0" data-reactions-enabled="1"
+    data-emit-metadata="0" data-input-position="bottom" data-theme="light"
+    data-lang="zh-CN" crossorigin="anonymous" async></script>
+  {% endif %}
 </article>
