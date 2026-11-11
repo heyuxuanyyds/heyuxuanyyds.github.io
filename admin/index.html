@@ -1,11 +1,99 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>写作后台 · Argon Blog</title><link rel="stylesheet" href="../assets/css/argon.css"><style>
-.admin{max-width:1100px;margin:25px auto;padding:0 16px}.panel{background:#fff;border-radius:13px;padding:20px;margin:15px 0;box-shadow:0 4px 15px #32325d0c}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}input,textarea,select{width:100%;padding:11px;border:1px solid #dee2e6;border-radius:7px;font:inherit;margin:5px 0 12px}textarea{min-height:270px;resize:vertical;font-family:ui-monospace,monospace}.btn{border:0;border-radius:7px;background:#5e72e4;color:white;padding:10px 15px;cursor:pointer;margin:4px}.btn.secondary{background:#8898aa}.btn.danger{background:#f5365c}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.status{color:#8898aa;font-size:13px}.item{padding:12px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;gap:10px}.preview{background:#f8f9fe;border-radius:8px;padding:15px;min-height:100px;overflow-wrap:anywhere}.hidden{display:none}.warning{background:#fff8e5;color:#805b10;padding:12px;border-radius:8px;font-size:13px}@media(max-width:720px){.grid{grid-template-columns:1fr}.item{display:block}}
-</style></head><body><header class="topbar"><a class="brand" href="../">Argon Blog</a><nav><a href="../">查看博客</a></nav></header>
-<main class="admin"><h1>文章管理</h1><p class="status">同域名管理后台 · GitHub 仓库作为内容存储</p>
-<div class="panel"><h2>连接 GitHub</h2><div class="warning">请创建仅授权此博客仓库、仅授予 Contents: Read and write 的 Fine-grained personal access token。不要把 Token 发给任何人。此页面不会将 Token 保存到浏览器存储；刷新页面后需要重新输入。</div>
-<div class="grid"><label>GitHub 用户名<input id="owner" placeholder="例如 octocat"></label><label>仓库名称<input id="repo" placeholder="例如 octocat.github.io"></label></div><label>Fine-grained Token<input id="token" type="password" autocomplete="off" placeholder="github_pat_..."></label><div class="row"><button class="btn" id="connect">连接仓库</button><span id="conn" class="status">尚未连接</span></div></div>
-<div class="panel"><div class="row"><h2 style="margin-right:auto">文章</h2><button class="btn" id="new">新建文章</button><button class="btn secondary" id="refresh">刷新列表</button></div><div id="posts" class="status">连接仓库后显示文章。</div></div>
-<div class="panel" id="editor"><h2 id="editTitle">新建文章</h2><label>文章标题<input id="title" placeholder="输入文章标题"></label><div class="grid"><label>分类<input id="category" placeholder="例如 随笔"></label><label>标签（逗号分隔）<input id="tags" placeholder="生活, 技术"></label></div><label>封面 / 正文图片（选择图片后上传）<input id="image" type="file" accept="image/*"></label><div class="row"><button class="btn secondary" id="upload">上传图片并插入 Markdown</button><span id="uploadStatus" class="status"></span></div><label>Markdown 正文<textarea id="body" placeholder="# 文章标题\n\n开始写作……"></textarea></label><div class="row"><button class="btn" id="saveDraft">保存本机草稿</button><button class="btn" id="publish">发布文章</button><button class="btn danger" id="delete" disabled>删除文章</button></div><h3>预览</h3><div id="preview" class="preview"></div><p id="msg" class="status"></p></div>
-<div class="panel"><h2>本机草稿</h2><div id="drafts" class="status">草稿只保存在当前浏览器，不会上传到公开仓库。</div></div>
-</main><script src="../assets/js/markdown.js"></script><script src="admin.js"></script></body></html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>博客管理后台</title>
+<link rel="stylesheet" href="../assets/css/argon.css">
+<style>
+:root{color-scheme:light}body{background:#f5f7fb}.admin{max-width:1180px;margin:26px auto;padding:0 16px}
+.panel{background:#fff;border-radius:14px;padding:20px;margin:15px 0;box-shadow:0 4px 18px #32325d0c}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+input,textarea,select{width:100%;padding:11px 12px;border:1px solid #dce2ea;border-radius:8px;font:inherit;margin:6px 0 13px;background:#fff;color:#32325d}
+textarea{min-height:260px;resize:vertical;font-family:ui-monospace,monospace}
+label{display:block;font-size:14px;font-weight:600;color:#525f7f}
+.btn{border:0;border-radius:8px;background:#5e72e4;color:white;padding:10px 15px;cursor:pointer;margin:3px;font:inherit}
+.btn.secondary{background:#8898aa}.btn.danger{background:#f5365c}.btn.light{background:#edf0ff;color:#5e72e4}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.status{color:#8898aa;font-size:13px}
+.item{padding:13px 4px;border-bottom:1px solid #edf0f4;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.item:last-child{border-bottom:0}.hidden{display:none!important}
+.warning{background:#fff8e5;color:#805b10;padding:12px;border-radius:8px;font-size:13px;line-height:1.7}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}.tab{background:#fff;color:#525f7f;border:1px solid #e4e8f0;border-radius:8px;padding:9px 14px;cursor:pointer}.tab.active{background:#5e72e4;color:#fff}
+.preview{background:#f8f9fe;border-radius:9px;padding:16px;min-height:110px;overflow-wrap:anywhere}
+.preview pre{overflow:auto;background:#172b4d;color:#fff;padding:14px;border-radius:8px}.preview img{max-width:100%}
+.login-wrap{max-width:420px;margin:9vh auto;padding:0 16px}.login-card{background:#fff;padding:28px;border-radius:16px;box-shadow:0 12px 35px #32325d18}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat{background:#f7f8fc;border-radius:10px;padding:15px}.stat strong{font-size:25px;display:block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.checkline{display:flex;align-items:center;gap:8px}.checkline input{width:auto;margin:0}
+@media(max-width:720px){.grid,.two{grid-template-columns:1fr}.statgrid{grid-template-columns:1fr}.admin{margin:14px auto}.panel{padding:15px}.item{align-items:flex-start}.topbar{padding:0 14px}}
+</style>
+</head>
+<body>
+<header class="topbar"><a class="brand" href="../">Argon Blog</a><nav><a href="../">查看博客</a></nav></header>
+
+<section id="loginView" class="login-wrap">
+  <div class="login-card">
+    <p class="eyebrow">ARGON BLOG CMS</p><h1>后台登录</h1>
+    <p class="status">首次使用默认密码：12345678。登录后建议立即修改。</p>
+    <label>管理密码<input id="loginPassword" type="password" autocomplete="current-password" placeholder="输入管理密码"></label>
+    <button class="btn" id="loginBtn" style="width:100%">登录后台</button>
+    <p id="loginMsg" class="status"></p>
+  </div>
+</section>
+
+<main id="appView" class="admin hidden">
+  <div class="row"><div style="margin-right:auto"><h1 style="margin-bottom:0">博客管理</h1><p class="status">GitHub Pages · 内容直接保存到你的仓库</p></div><button class="btn secondary" id="lockBtn">锁定后台</button></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="dashboard">总览</button><button class="tab" data-tab="articles">文章</button><button class="tab" data-tab="pages">独立页面</button><button class="tab" data-tab="media">媒体库</button><button class="tab" data-tab="settings">设置</button>
+  </div>
+
+  <section id="tab-dashboard">
+    <div class="panel"><h2>站点状态</h2><div class="statgrid"><div class="stat"><strong id="postCount">—</strong><span>文章</span></div><div class="stat"><strong id="pageCount">—</strong><span>独立页面</span></div><div class="stat"><strong id="mediaCount">—</strong><span>媒体文件</span></div></div><p id="dashboardStatus" class="status">请先在设置中连接 GitHub 仓库。</p></div>
+    <div class="panel"><h2>快速开始</h2><p>先连接仓库，然后就可以在后台写文章、上传图片和管理页面。每次保存会直接提交到 GitHub，自动触发 Pages 部署。</p><button class="btn" data-goto="articles">写一篇文章</button><button class="btn secondary" data-goto="settings">连接 GitHub</button></div>
+  </section>
+
+  <section id="tab-articles" class="hidden">
+    <div class="panel"><div class="row"><h2 style="margin-right:auto">文章管理</h2><button class="btn" id="newPost">新建文章</button><button class="btn secondary" id="reloadPosts">刷新</button></div>
+      <div class="grid"><input id="postSearch" placeholder="搜索标题、文件名或正文"><select id="postFilter"><option value="all">全部文章</option><option value="draft">草稿</option><option value="scheduled">定时发布</option><option value="published">已发布</option></select></div>
+      <div class="row"><button class="btn danger" id="bulkDelete">删除选中</button><span id="postListStatus" class="status"></span></div><div id="postsList">尚未连接仓库</div>
+    </div>
+    <div class="panel" id="postEditor">
+      <h2 id="editorHeading">新建文章</h2>
+      <label>标题<input id="postTitle" placeholder="文章标题"></label>
+      <div class="grid"><label>分类<input id="postCategory" placeholder="例如：随笔、技术"></label><label>标签<input id="postTags" placeholder="用英文逗号分隔"></label></div>
+      <div class="grid"><label>发布时间<input id="postDate" type="datetime-local"></label><label>文章状态<select id="postStatus"><option value="published">发布</option><option value="draft">保存为草稿</option><option value="scheduled">定时发布</option></select></label></div>
+      <label>摘要（可留空，自动截取正文）<input id="postExcerpt" placeholder="搜索引擎和列表摘要"></label>
+      <label>封面图片 URL<input id="postCover" placeholder="/assets/uploads/cover.png 或 https://..."></label>
+      <label>正文 Markdown<textarea id="postBody" placeholder="# 开始写作……"></textarea></label>
+      <div class="row"><input id="imageFile" type="file" accept="image/*" style="max-width:300px"><button class="btn secondary" id="uploadImage">上传图片</button><button class="btn light" id="insertToc">插入目录</button></div><p id="imageStatus" class="status"></p>
+      <div class="row"><button class="btn" id="savePost">保存文章</button><button class="btn secondary" id="saveLocalDraft">保存本机草稿</button><button class="btn danger" id="deletePost" disabled>删除文章</button><button class="btn light" id="cancelEdit">取消</button></div>
+      <h3>实时预览</h3><div id="postPreview" class="preview"></div><p id="editorStatus" class="status"></p>
+    </div>
+    <div class="panel"><h2>本机草稿</h2><p class="status">只保存在当前浏览器，不会上传到公开仓库。</p><div id="localDrafts">暂无本机草稿</div></div>
+  </section>
+
+  <section id="tab-pages" class="hidden">
+    <div class="panel"><div class="row"><h2 style="margin-right:auto">独立页面</h2><button class="btn" id="newPage">新建页面</button><button class="btn secondary" id="reloadPages">刷新</button></div><div id="pagesList">尚未连接仓库</div></div>
+    <div class="panel" id="pageEditor"><h2 id="pageEditorHeading">新建页面</h2><label>页面标题<input id="pageTitle"></label><label>页面路径（例如 about）<input id="pageSlug" placeholder="about"></label><label>Markdown 内容<textarea id="pageBody"></textarea></label><div class="row"><button class="btn" id="savePage">保存页面</button><button class="btn danger" id="deletePage" disabled>删除页面</button></div><p id="pageStatus" class="status"></p></div>
+  </section>
+
+  <section id="tab-media" class="hidden">
+    <div class="panel"><div class="row"><h2 style="margin-right:auto">媒体库</h2><button class="btn secondary" id="reloadMedia">刷新</button></div><p class="status">上传图片会提交到仓库的 assets/uploads/，文件会随网站公开。</p><div id="mediaList">尚未连接仓库</div></div>
+  </section>
+
+  <section id="tab-settings" class="hidden">
+    <div class="panel"><h2>GitHub 仓库连接</h2><div class="warning">Token 会使用管理密码通过浏览器加密后保存在本机，不会明文写入 localStorage，也不会显示或提供复制按钮。浏览器开发者工具仍可能接触到运行时数据；请只使用专门创建、仅授权本仓库 Contents 读写权限的 Fine-grained Token。</div>
+      <div class="grid"><label>GitHub 用户名<input id="ghOwner" placeholder="你的 GitHub 用户名"></label><label>仓库名<input id="ghRepo" placeholder="例如 username.github.io"></label></div>
+      <label>Fine-grained Token<input id="ghToken" type="password" autocomplete="off" placeholder="粘贴 github_pat_..."></label><div class="row"><button class="btn" id="connectGithub">保存并连接</button><button class="btn secondary" id="forgetToken">清除本机 Token</button><span id="githubStatus" class="status">未连接</span></div>
+      <p class="status">需要 Repository permissions → Contents: Read and write。不要授予 Administration 等无关权限。</p>
+    </div>
+    <div class="panel"><h2>安全设置</h2><label>当前管理密码<input id="oldPassword" type="password" autocomplete="current-password"></label><div class="grid"><label>新密码<input id="newPassword" type="password" autocomplete="new-password"></label><label>再次输入新密码<input id="confirmPassword" type="password" autocomplete="new-password"></label></div><button class="btn" id="changePassword">修改管理密码</button><p id="passwordStatus" class="status"></p></div>
+    <div class="panel"><h2>站点外观与评论</h2><label>博客标题<input id="siteTitle"></label><label>站点描述<input id="siteDescription"></label><label>Giscus 仓库（可留空关闭评论）<input id="giscusRepo" placeholder="owner/repo"></label><label>Giscus Repository ID<input id="giscusRepoId" placeholder="例如：R_kgDO..."></label><label>Giscus Category 名称<input id="giscusCategoryName" value="General"></label><label>Giscus Category ID<input id="giscusCategory"></label><button class="btn" id="saveSiteSettings">保存站点设置</button><p class="status">Giscus 需要在官网启用 Discussions，并填写仓库、Repository ID、Category 名称和 Category ID；信息不完整时评论区不会显示。</p></div>
+    <div class="panel"><h2>备份与恢复</h2><div class="row"><button class="btn secondary" id="exportBackup">导出文章与页面备份</button><label class="btn light" for="importBackup" style="cursor:pointer">导入备份<input id="importBackup" type="file" accept="application/json" class="hidden"></label></div><p class="status">导出为 JSON。导入会逐篇写入 GitHub 仓库，覆盖同路径文件前会读取当前版本。</p></div>
+    <div class="panel"><h2>部署提示</h2><p>仓库 Settings → Pages → Build and deployment → Source 选择 <b>GitHub Actions</b>。之后文章更新会自动部署；定时发布由每 15 分钟运行一次的 Actions 任务检查。</p><p class="status">GitHub Actions 定时任务可能有延迟；仓库长期无活动时 GitHub 也可能暂停 schedule，届时在 Actions 页面手动运行一次即可恢复。</p></div>
+  </section>
+</main>
+
+<div id="tokenModal" class="hidden" style="position:fixed;inset:0;background:#10182899;z-index:20;display:grid;place-items:center;padding:18px">
+ <div class="login-card" style="width:min(460px,100%)"><h2>需要重新授权 GitHub</h2><p id="tokenReason" class="status">Token 可能已失效或权限不足。请重新粘贴 Token。</p><label>Fine-grained Token<input id="modalToken" type="password" autocomplete="off"></label><div class="row"><button class="btn" id="modalSave">验证并保存</button><button class="btn secondary" id="modalCancel">稍后再说</button></div><p id="modalStatus" class="status"></p></div>
+</div>
+<script src="../assets/js/markdown.js"></script><script src="admin.js"></script>
+</body></html>
