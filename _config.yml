@@ -3,8 +3,13 @@ description: A free blog powered by GitHub Pages
 url: ""
 baseurl: ""
 markdown: kramdown
+highlighter: rouge
 permalink: /:categories/:year/:month/:day/:title/
-plugins: []
+future: false
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
 exclude:
   - README.md
   - LICENSE
+  - admin/README.md
